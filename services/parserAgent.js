@@ -1,5 +1,4 @@
 const fetch = require("node-fetch");
-
 /**
  * Parses a portfolio HTML text using Google Gemini API to extract user data.
  * @param {string} htmlText - The HTML text of the portfolio web page.
@@ -13,7 +12,7 @@ async function parserAgent(htmlText) {
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
-  const prompt = `Extract all relevant user data (name, contact, skills, experience, education, links, etc.) from the following portfolio web page HTML. Return the result as a JSON object.\n\nHTML:\n${htmlText}`;
+  const prompt = `Extract all relevant user data (name, contact, skills, experience, education, links, etc.) from the following portfolio web page HTML. Return only a clean, valid JSON object without any markdown or code blocks.\n\nHTML:\n${htmlText}`;
 
   const body = {
     contents: [
@@ -35,7 +34,7 @@ async function parserAgent(htmlText) {
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Gemini API error: ${response.status} ${errorText}`);
+    throw new Error(`AGENT API error: ${response.status} ${errorText}`);
   }
 
   const data = await response.json();
@@ -44,8 +43,18 @@ async function parserAgent(htmlText) {
   try {
     return JSON.parse(text);
   } catch (e) {
-    // If not valid JSON, return the raw text
-    return { raw: text };
+    // Try to extract JSON object from the string
+    const match = text.match(/\{[\s\S]*\}/);
+    if (match) {
+      try {
+        return JSON.parse(match[0]);
+      } catch (e2) {
+        throw new Error(
+          "Failed to parse extracted JSON object from Gemini API response"
+        );
+      }
+    }
+    throw new Error("Agent API did not return a valid JSON object");
   }
 }
 

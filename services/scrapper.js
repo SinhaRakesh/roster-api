@@ -10,8 +10,9 @@ async function scrapeAgent(url) {
 
   // console.log("working");
   const textContent = await page.$eval("body", (ele) => ele.innerText);
-  console.log("Extracted Text:", textContent);
+  // console.log("Extracted Text:", textContent);
   await browser.close();
+  await new Promise((resolve) => setTimeout(resolve, 500));
   return textContent;
 }
 

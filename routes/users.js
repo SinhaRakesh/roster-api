@@ -26,6 +26,7 @@ router.post("/process-portfolio", async function (req, res, next) {
 
   try {
     const textContent = await scrapeAgent(url);
+    // const textContent = "<h1>hello</h1>";
     const parsedJsonData = await parserAgent(textContent);
     res.send({
       message: "URL Verified Successfully",
