@@ -1,7 +1,8 @@
 var express = require("express");
 var router = express.Router();
 const db = require("../config/pgdb");
-const { scrapePortfolio } = require("../services/scrapper");
+const { scrapeAgent } = require("../services/scrapper");
+const { parserAgent } = require("../services/parserAgent");
 
 /* GET users listing. */
 router.get("/", function (req, res, next) {
@@ -24,11 +25,12 @@ router.post("/process-portfolio", async function (req, res, next) {
   console.log(url, "");
 
   try {
-    const textContent = await scrapePortfolio(url);
+    const textContent = await scrapeAgent(url);
+    const parsedJsonData = await parserAgent(textContent);
     res.send({
-      message: "Record Verified Successfully",
+      message: "URL Verified Successfully",
       url,
-      textContent,
+      parsedJsonData,
     });
   } catch (err) {
     console.error(err);
