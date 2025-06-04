@@ -13,10 +13,10 @@ CREATE TABLE "users" (
     "email" VARCHAR(250) NULL,
     "mobile" CHARACTER(20) NULL,
     "portfolio_link" VARCHAR(250) NULL,
-    "skill_summary" INTEGER NULL,
-    "experience_years" INTEGER NULL,
+    "skill_summary" TEXT NULL,
+    "experience_years" TEXT NULL,
     "experience_details" TEXT NULL,
-    "experience_clients" JSON NULL,
-    "additional_info" JSON NULL,
+    "experience_clients" TEXT NULL,
+    "additional_info" TEXT NULL,
     CONSTRAINT "PK_users" PRIMARY KEY ("id")
 );
