@@ -1,5 +1,6 @@
 const fetch = require("node-fetch");
 const db = require("../config/pgdb");
+const fs = require("fs");
 /**
  * Parses a portfolio HTML text using Google Gemini API to extract user data.
  * @param {string} htmlText - The HTML text of the portfolio web page.
@@ -70,11 +71,19 @@ async function parserAgent(htmlText) {
   const data = await response.json();
   // The response format may vary; adjust as needed
   const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-  console.log(text);
+  // console.log(text);
+
+  // Write the text to a file for debugging
+  fs.writeFileSync(__dirname + "/agent_output.json", text);
+
+  // const fileContent = fs.readFileSync(__dirname + "/agent_output.json", "utf-8");
 
   let formattedData = {};
   try {
-    formattedData = JSON.parse(text);
+    const lines = text.split("\n");
+    const cleaned = lines.slice(1, -1).join("\n");
+    // const data = JSON.parse(cleaned);
+    formattedData = JSON.parse(cleaned);
   } catch (e) {
     // Try to extract JSON object from the string
     const match = await text.match(/\{[\s\S]*\}/);
@@ -90,56 +99,13 @@ async function parserAgent(htmlText) {
     throw new Error("Agent API did not return a valid JSON object");
   }
 
-  // update data into database
-  // Insert user
-  const userFields = [
-    "name",
-    "title",
-    "email",
-    "mobile",
-    "portfolio_link",
-    "skill_summary",
-    "experience_years",
-    "experience_details",
-    "experience_clients",
-    "additional_info",
-  ];
-  const userValues = userFields.map((f) => formattedData[f] ?? null);
-  // Ensure JSON fields are stringified
-  // userValues[8] = userValues[8] ? JSON.stringify(userValues[8]) : null; // experience_clients
-  // userValues[9] = userValues[9] ? JSON.stringify(userValues[9]) : null; // additional_info
+  // console.log(formattedData);
+  fs.writeFileSync(
+    __dirname + "/agent_output.json",
+    JSON.stringify(formattedData)
+  );
 
-  const insertUserQuery = `
-    INSERT INTO users (
-      name, title, email, mobile, portfolio_link, skill_summary, experience_years, experience_details, experience_clients, additional_info
-    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-    RETURNING id
-  `;
-  let userId = 0;
-  try {
-    const userRes = await db.query(insertUserQuery, userValues);
-    userId = userRes.rows[0].id;
-  } catch (err) {
-    throw new Error("Failed to insert user: " + err.message);
-  }
-
-  // Insert testimonials if present
-  if (Array.isArray(formattedData.testimonials)) {
-    for (const testimonial of formattedData.testimonials) {
-      const { author = null, text = null } = testimonial;
-      try {
-        await db.query(
-          `INSERT INTO testimonials (user_id, author, text) VALUES ($1, $2, $3)`,
-          [userId, author, text]
-        );
-      } catch (err) {
-        // Optionally log or handle testimonial insert errors
-        console.error("Failed to insert testimonial:", err.message);
-      }
-    }
-  }
-  // Optionally, you can return the userId or the inserted data
-  return { userId, ...formattedData };
+  return formattedData;
 }
 
 module.exports = { parserAgent };
