@@ -19,22 +19,6 @@ async function getAllUsers() {
   return result.rows;
 }
 
-/**
- * Update user fields by ID
- * @param {number} id
- * @param {Object} updateFields - key-value pairs of fields to update
- * @returns {Promise<Object|null>} - Updated user or null if not found
- */
-async function updateUserById(id, updateFields) {
-  const keys = Object.keys(updateFields);
-  if (keys.length === 0) return null;
-  const setClause = keys.map((key, idx) => `${key} = $${idx + 2}`).join(", ");
-  const values = keys.map((key) => updateFields[key]);
-  const query = `UPDATE users SET ${setClause} WHERE id = $1 RETURNING *`;
-  const result = await db.query(query, [id, ...values]);
-  return result.rows[0] || null;
-}
-
 async function updateUserPortfolio(portfolioUrl, fd) {
   const userValues = [
     fd.name,
@@ -64,6 +48,7 @@ async function updateUserPortfolio(portfolioUrl, fd) {
   }
 
   console.log(userId);
+  // console.log(fd.testimonials);
   // Insert testimonials if present
   if (Array.isArray(fd.testimonials)) {
     for (const testimonial of fd.testimonials) {
@@ -87,6 +72,5 @@ async function updateUserPortfolio(portfolioUrl, fd) {
 module.exports = {
   getUserById,
   getAllUsers,
-  updateUserById,
   updateUserPortfolio,
 };
